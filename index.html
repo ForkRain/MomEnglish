@@ -130,6 +130,19 @@
   .btn { display: block; width: 100%; padding: 18px; border-radius: 16px; font-size: 22px; font-weight: 800; margin-top: 10px; }
   .btn.main { background: var(--review); color: #fff; }
   .btn.alt { background: var(--ink); color: #fff; }
+  .btn.plain { background: var(--card); border: 2px solid var(--line); }
+
+  /* ---------- 백업 ---------- */
+  .backup-box { background: var(--card); border: 2px solid var(--line); border-radius: 20px; padding: 16px; }
+  .backup-box p { margin: 0 0 6px; color: var(--muted); font-size: 17px; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: flex; align-items: flex-end; justify-content: center; z-index: 10; }
+  .sheet { background: var(--bg); width: 100%; max-width: 560px; border-radius: 24px 24px 0 0; padding: 20px 16px 24px; max-height: 92dvh; overflow-y: auto; }
+  .sheet h3 { margin: 0 0 8px; font-size: 24px; }
+  .sheet p { margin: 0 0 10px; font-size: 17px; color: var(--muted); }
+  .sheet textarea { width: 100%; font: 14px/1.4 monospace; padding: 10px; border-radius: 12px; border: 2px solid var(--line); background: var(--card); color: var(--ink); resize: vertical; word-break: break-all; }
+  .msg { text-align: center; font-weight: 800; font-size: 19px; min-height: 28px; margin-top: 10px; }
+  .msg.ok { color: var(--done); }
+  .msg.no { color: var(--wrong); }
 </style>
 </head>
 <body>
@@ -143,7 +156,35 @@
     <span class="ld">연습 완료</span><span class="lr">복습 필요</span><span class="ln">아직 안 함</span>
   </div>
   <div id="chapters"></div>
+
+  <h2 class="sec">💾 공부 기록 지키기</h2>
+  <div class="backup-box">
+    <p>폰을 바꾸거나 기록이 지워졌을 때를 대비해서, 가끔 백업해서 카톡 등에 보관해 두세요.</p>
+    <button class="btn alt" id="openBackup">📤 기록 백업하기</button>
+    <button class="btn plain" id="openRestore">📥 기록 불러오기</button>
+  </div>
 </main>
+
+<!-- 백업 / 불러오기 창 -->
+<div class="modal" id="modal" hidden>
+  <div class="sheet">
+    <div id="backupPane">
+      <h3>📤 기록 백업</h3>
+      <p id="backupInfo"></p>
+      <textarea id="backupCode" readonly rows="4"></textarea>
+      <button class="btn main" id="shareBackup">카톡 등으로 보내기</button>
+      <button class="btn alt" id="copyBackup">백업 글자 복사하기</button>
+    </div>
+    <div id="restorePane">
+      <h3>📥 기록 불러오기</h3>
+      <p>보관해 둔 백업 글자를 아래 칸에 붙여넣고 "불러오기"를 눌러주세요.<br><b>지금 폰에 있는 기록은 백업 내용으로 바뀌어요.</b></p>
+      <textarea id="restoreCode" rows="4" placeholder="여기를 꾹 눌러서 붙여넣기"></textarea>
+      <button class="btn main" id="doRestore">불러오기</button>
+    </div>
+    <div class="msg" id="modalMsg"></div>
+    <button class="btn plain" id="closeModal">닫기</button>
+  </div>
+</div>
 
 <!-- 배움 화면 (플래시카드) -->
 <section id="learn" class="screen" hidden>
@@ -247,7 +288,9 @@
     const review = ALL.filter(w => stOf(w.en) === "review").length;
     $("summary").innerHTML = `전체 ${ALL.length}개 · <b class="d">완료 ${done}</b> · <b class="r">복습 ${review}</b>`;
     $("reviewAll").hidden = review === 0;
-    $("reviewAll").textContent = `🔁 복습 필요 단어 공부하기 (${review}개 중 ${Math.min(review, 10)}개씩)`;
+    $("reviewAll").textContent = review <= 10
+      ? `🔁 복습 필요 단어 ${review}개 공부하기`
+      : `🔁 복습 필요 단어 공부하기 (${review}개 중 10개씩)`;
 
     $("chapters").innerHTML = CHAPTERS.map((c, i) => {
       const d = c.words.filter(w => stOf(w[1]) === "done").length;
@@ -423,6 +466,75 @@
     $("rRetry").onclick = () => openLearn(left, "다시 공부");
     show("result");
   }
+
+  // ---------- 백업 / 불러오기 ----------
+  // 백업 글자 = "MOMENG1-" + base64({영어단어: 연속정답수})  (기록이 있는 단어는 복습 필요, 4 이상이면 완료)
+  const PREFIX = "MOMENG1-";
+  function makeBackup() {
+    const data = {};
+    for (const en in status) data[en] = status[en].n;
+    return PREFIX + btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  }
+  function readBackup(text) {
+    const m = (text || "").replace(/\s+/g, "").match(/MOMENG1-([A-Za-z0-9+/=]+)/);
+    if (!m) return null;
+    try {
+      const data = JSON.parse(decodeURIComponent(escape(atob(m[1]))));
+      const out = {};
+      for (const en in data) {
+        const n = Math.max(0, Math.min(NEED, parseInt(data[en], 10) || 0));
+        out[en] = { s: n >= NEED ? "done" : "review", n };
+      }
+      return out;
+    } catch (e) { return null; }
+  }
+  function countOf(st) {
+    const v = Object.values(st);
+    return { done: v.filter(x => x.s === "done").length, review: v.filter(x => x.s === "review").length };
+  }
+  function openModal(which) {
+    $("backupPane").hidden = which !== "backup";
+    $("restorePane").hidden = which !== "restore";
+    $("modalMsg").textContent = ""; $("modalMsg").className = "msg";
+    if (which === "backup") {
+      const c = countOf(status);
+      $("backupInfo").textContent = `완료 ${c.done}개 · 복습 ${c.review}개 기록을 아래 글자로 만들었어요. 카톡 '나에게 보내기' 등에 보관하세요.`;
+      $("backupCode").value = makeBackup();
+    } else {
+      $("restoreCode").value = "";
+    }
+    $("modal").hidden = false;
+  }
+  function modalMsg(text, ok) { $("modalMsg").textContent = text; $("modalMsg").className = "msg " + (ok ? "ok" : "no"); }
+  $("openBackup").addEventListener("click", () => openModal("backup"));
+  $("openRestore").addEventListener("click", () => openModal("restore"));
+  $("closeModal").addEventListener("click", () => { $("modal").hidden = true; });
+  $("modal").addEventListener("click", (e) => { if (e.target === $("modal")) $("modal").hidden = true; });
+
+  async function copyText(t) {
+    try { await navigator.clipboard.writeText(t); return true; }
+    catch (e) { $("backupCode").select(); try { return document.execCommand("copy"); } catch (e2) { return false; } }
+  }
+  $("copyBackup").addEventListener("click", async () => {
+    modalMsg(await copyText($("backupCode").value) ? "✅ 복사했어요! 카톡에 붙여넣어 보관하세요." : "복사가 안 됐어요. 글자를 꾹 눌러서 직접 복사해 주세요.", true);
+  });
+  $("shareBackup").addEventListener("click", async () => {
+    const d = new Date();
+    const text = `엄마 영어 단어장 기록 백업 (${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()})\n${$("backupCode").value}`;
+    if (navigator.share) {
+      try { await navigator.share({ text }); modalMsg("✅ 보냈어요!", true); } catch (e) { /* 취소 */ }
+    } else {
+      modalMsg(await copyText(text) ? "✅ 복사했어요! 카톡에 붙여넣어 보관하세요." : "복사가 안 됐어요. 글자를 꾹 눌러서 직접 복사해 주세요.", true);
+    }
+  });
+  $("doRestore").addEventListener("click", () => {
+    const data = readBackup($("restoreCode").value);
+    if (!data) { modalMsg("❌ 백업 글자가 아니에요. 'MOMENG1-'로 시작하는 글자를 통째로 붙여넣어 주세요.", false); return; }
+    const c = countOf(data);
+    if (!confirm(`완료 ${c.done}개 · 복습 ${c.review}개 기록으로 바꿀까요?\n지금 폰에 있는 기록은 없어져요.`)) return;
+    status = data; save(); renderHome();
+    modalMsg(`✅ 불러왔어요! 완료 ${c.done}개 · 복습 ${c.review}개`, true);
+  });
 
   renderHome();
 
