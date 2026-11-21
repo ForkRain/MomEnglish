@@ -45,8 +45,8 @@
   .summary b.d { color: var(--done); }
   .summary b.r { color: var(--review); }
   .review-all {
-    width: 100%; padding: 16px; border-radius: 16px; margin-bottom: 16px;
-    background: var(--review); color: #fff; font-size: 44px; font-weight: 700;
+    width: 100%; padding: 10px 14px; border-radius: 14px; margin-bottom: 14px;
+    background: var(--review); color: #fff; font-size: 18px; font-weight: 700;
   }
   .legend { display: flex; gap: 14px; font-size: 16px; color: var(--muted); margin-bottom: 14px; flex-wrap: wrap; }
   .legend span::before { content: "●"; margin-right: 4px; }
@@ -309,7 +309,7 @@
     $("reviewAll").hidden = review === 0;
     $("reviewAll").textContent = review <= 10
       ? `🔁 복습 필요 단어 ${review}개 공부하기`
-      : `🔁 복습 필요 단어 공부하기 (${review}개 중 10개씩)`;
+      : `🔁 복습 단어 10개 공부하기 (총 ${review}개)`;
 
     // 10개 모두 완료한 챕터는 맨 아래 "완료한 챕터"로 보냄 (스크롤 줄이기)
     const card = (c, i, d, r) => `
