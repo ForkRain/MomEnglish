@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#f59e0b">
-<title>엄마 여행 영어</title>
+<title>엄마 영어 단어장</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -62,10 +62,9 @@
   .bar .d { background: var(--done); }
   .bar .r { background: var(--review); }
   .ch-count { font-size: 16px; color: var(--muted); }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  .chip { font-size: 16px; padding: 4px 10px; border-radius: 99px; background: var(--none-bg); }
-  .chip.done { background: var(--done-bg); color: var(--done); font-weight: 700; }
-  .chip.review { background: var(--review-bg); color: var(--review); font-weight: 700; }
+  .chapter.all-done { border-color: var(--done); background: var(--done-bg); }
+  .sec { font-size: 22px; margin: 24px 4px 10px; }
+  .sec small { font-size: 16px; color: var(--muted); font-weight: 600; }
 
   /* ---------- 공통 상단 ---------- */
   .screen { display: flex; flex-direction: column; min-height: 100dvh; }
@@ -90,7 +89,9 @@
   .nav { display: flex; gap: 10px; margin-top: 14px; }
   .nav button { flex: 1; padding: 18px 8px; border-radius: 16px; font-size: 22px; font-weight: 800; background: var(--ink); color: #fff; }
   .nav button:disabled { opacity: .25; }
-  .nav button.go { background: var(--done); }
+  .quiz-go { margin-top: 28px; padding-top: 18px; border-top: 2px dashed var(--line); text-align: center; }
+  .qg-text { color: var(--muted); font-size: 17px; margin-bottom: 10px; }
+  .quiz-go button { width: 100%; padding: 18px; border-radius: 16px; font-size: 24px; font-weight: 800; background: var(--done); color: #fff; }
   .dots { display: flex; justify-content: center; gap: 6px; margin-top: 12px; }
   .dot { width: 10px; height: 10px; border-radius: 50%; background: #d8ccbb; }
   .dot.now { background: var(--ink); transform: scale(1.3); }
@@ -115,12 +116,17 @@
   .r-score { font-size: 32px; font-weight: 900; margin: 8px 0 4px; }
   .r-sub { color: var(--muted); }
   .r-list { text-align: left; background: var(--card); border: 2px solid var(--line); border-radius: 20px; padding: 8px 16px; margin: 20px 0; }
-  .r-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .r-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
   .r-item:last-child { border-bottom: 0; }
-  .r-item .mk { font-size: 24px; }
-  .r-item .tx { flex: 1; }
-  .r-item .tx b { font-size: 22px; }
-  .r-item .tx span { color: var(--muted); }
+  .r-left { min-width: 0; }
+  .r-en { font-size: 24px; font-weight: 900; word-break: break-word; }
+  .r-note { font-size: 14px; font-weight: 700; margin-top: 2px; }
+  .r-note.no { color: var(--wrong); }
+  .r-note.ok { color: var(--muted); }
+  .r-note.done { color: var(--done); }
+  .r-right { text-align: right; flex-shrink: 0; max-width: 50%; }
+  .r-pr { font-size: 20px; font-weight: 800; color: var(--accent); }
+  .r-ko { font-size: 18px; color: var(--ink); }
   .btn { display: block; width: 100%; padding: 18px; border-radius: 16px; font-size: 22px; font-weight: 800; margin-top: 10px; }
   .btn.main { background: var(--review); color: #fff; }
   .btn.alt { background: var(--ink); color: #fff; }
@@ -130,7 +136,7 @@
 
 <!-- 홈 화면 -->
 <main id="home" class="wrap">
-  <h1 class="title">엄마 여행 영어 ✈️</h1>
+  <h1 class="title">엄마 영어 단어장 🌼</h1>
   <p class="summary" id="summary"></p>
   <button class="review-all" id="reviewAll" hidden></button>
   <div class="legend">
@@ -159,7 +165,11 @@
       <button id="next">다음 ▶</button>
     </div>
     <div class="dots" id="dots"></div>
-    <div class="hint">카드를 왼쪽·오른쪽으로 밀어도 넘어가요</div>
+    <div class="hint" id="hint">카드를 왼쪽·오른쪽으로 밀어도 넘어가요</div>
+    <div class="quiz-go" id="quizGo" hidden>
+      <div class="qg-text">10개 단어를 다 봤어요! 준비되면 눌러주세요 👇</div>
+      <button id="startQuiz">✏️ 퀴즈 풀기</button>
+    </div>
   </div>
 </section>
 
@@ -186,7 +196,7 @@
   <div class="stage result">
     <div class="r-big" id="rBig"></div>
     <div class="r-score" id="rScore"></div>
-    <div class="r-sub">맞힌 단어는 <b style="color:var(--done)">연습 완료</b>, 틀린 단어는 <b style="color:var(--review)">복습 필요</b>로 표시했어요</div>
+    <div class="r-sub">퀴즈에서 <b>4번 연속</b> 맞힌 단어만 <b style="color:var(--done)">연습 완료</b>가 돼요.<br>틀리면 처음부터 다시 세요.</div>
     <div class="r-list" id="rList"></div>
     <button class="btn main" id="rRetry">🔁 틀린 단어 다시 공부하기</button>
     <button class="btn alt" data-home>처음 화면으로</button>
@@ -200,7 +210,13 @@
   let status = {};
   try { status = JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { status = {}; }
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(status)); } catch (e) {} };
-  const stOf = (en) => status[en] || "";
+  // 단어별 기록: { s: "done" | "review", n: 연속으로 맞힌 횟수 }
+  const NEED = 4; // 이만큼 연속으로 맞히면 연습 완료
+  for (const k in status) { // 예전 형식("done"/"review") 변환
+    if (typeof status[k] === "string") status[k] = { s: status[k], n: status[k] === "done" ? NEED : 0 };
+  }
+  const stOf = (en) => (status[en] && status[en].s) || "";
+  const nOf = (en) => (status[en] && status[en].n) || 0;
 
   const ALL = CHAPTERS.flatMap((c, ci) => c.words.map(w => ({ ko: w[0], en: w[1], pr: w[2], em: w[3], ci })));
   const $ = (id) => document.getElementById(id);
@@ -231,22 +247,22 @@
     const review = ALL.filter(w => stOf(w.en) === "review").length;
     $("summary").innerHTML = `전체 ${ALL.length}개 · <b class="d">완료 ${done}</b> · <b class="r">복습 ${review}</b>`;
     $("reviewAll").hidden = review === 0;
-    $("reviewAll").textContent = `🔁 복습 필요 단어 ${review}개 모아 공부하기`;
+    $("reviewAll").textContent = `🔁 복습 필요 단어 공부하기 (${review}개 중 ${Math.min(review, 10)}개씩)`;
 
     $("chapters").innerHTML = CHAPTERS.map((c, i) => {
       const d = c.words.filter(w => stOf(w[1]) === "done").length;
       const r = c.words.filter(w => stOf(w[1]) === "review").length;
-      const chips = c.words.map(w => `<span class="chip ${stOf(w[1])}">${w[0].split(" (")[0]} ${w[1]}</span>`).join("");
-      return `
-        <div class="chapter">
+      const head = i === 0 ? `<h2 class="sec">✈️ 여행 영어 <small>1~10장</small></h2>`
+                 : i === 10 ? `<h2 class="sec">📘 기초 단어 <small>11~50장</small></h2>` : "";
+      return `${head}
+        <div class="chapter${d === 10 ? " all-done" : ""}">
           <div class="ch-head">
             <div class="ch-emoji">${c.emoji}</div>
             <div class="ch-name"><div class="n">${i + 1}장</div><div class="t">${c.title}</div></div>
             <button class="ch-start" data-ch="${i}">시작</button>
           </div>
           <div class="bar"><div class="d" style="width:${d * 10}%"></div><div class="r" style="width:${r * 10}%"></div></div>
-          <div class="ch-count">완료 ${d} · 복습 ${r} · 아직 ${10 - d - r}</div>
-          <div class="chips">${chips}</div>
+          <div class="ch-count">${d === 10 ? "🎉 모두 완료!" : `완료 ${d} · 복습 ${r} · 아직 ${10 - d - r}`}</div>
         </div>`;
     }).join("");
   }
@@ -255,7 +271,8 @@
     if (b) { const ci = +b.dataset.ch; openLearn(ALL.filter(w => w.ci === ci), `${ci + 1}장 ${CHAPTERS[ci].title}`); }
   });
   $("reviewAll").addEventListener("click", () => {
-    const list = ALL.filter(w => stOf(w.en) === "review");
+    // 연속 정답 수가 적은 단어부터 10개씩
+    const list = ALL.filter(w => stOf(w.en) === "review").sort((a, b) => nOf(a.en) - nOf(b.en)).slice(0, 10);
     if (list.length) openLearn(list, "복습 단어");
   });
 
@@ -275,16 +292,19 @@
     $("wPr").textContent = `[ ${w.pr} ]`;
     $("pos").textContent = `${idx + 1} / ${deck.length}`;
     $("prev").disabled = idx === 0;
+    // 마지막 카드: "다음"은 멈추고, 퀴즈 버튼은 아래쪽 다른 자리에 따로 보여줌 (실수로 바로 퀴즈로 가지 않게)
     const last = idx === deck.length - 1;
-    $("next").textContent = last ? "퀴즈 풀기 ✏️" : "다음 ▶";
-    $("next").classList.toggle("go", last);
+    $("next").disabled = last;
+    $("quizGo").hidden = !last;
+    $("hint").hidden = last;
+    $("quizGo").querySelector(".qg-text").textContent = `${deck.length}개 단어를 다 봤어요! 준비되면 눌러주세요 👇`;
     $("dots").innerHTML = deck.length <= 20
       ? deck.map((_, i) => `<span class="dot ${i === idx ? "now" : ""}"></span>`).join("") : "";
   }
   function move(step) {
     const n = idx + step;
     if (n < 0) return;
-    if (n >= deck.length) { startQuiz(); return; }
+    if (n >= deck.length) return;
     const card = $("card");
     card.style.opacity = "0";
     card.style.transform = `translateX(${step > 0 ? -40 : 40}px)`;
@@ -301,6 +321,7 @@
   }
   $("prev").addEventListener("click", () => move(-1));
   $("next").addEventListener("click", () => move(1));
+  $("startQuiz").addEventListener("click", () => startQuiz());
 
   let sx = null, sy = null;
   $("card").addEventListener("touchstart", (e) => { sx = e.touches[0].clientX; sy = e.touches[0].clientY; }, { passive: true });
@@ -315,7 +336,20 @@
   });
 
   // ---------- 소리 ----------
+  // 실제 사람 녹음(audio 폴더)이 있으면 그걸 틀고, 없을 때만 폰 음성으로 읽기
+  let player = null;
   function speak(text) {
+    const file = (window.AUDIO || {})[text];
+    if (player) { player.pause(); player = null; }
+    if (window.speechSynthesis) speechSynthesis.cancel();
+    if (file) {
+      player = new Audio(file);
+      player.play().catch(() => tts(text));
+      return;
+    }
+    tts(text);
+  }
+  function tts(text) {
     if (!("speechSynthesis" in window)) { alert("이 폰에서는 소리 기능을 쓸 수 없어요."); return; }
     speechSynthesis.cancel();
     const u = new SpeechSynthesisUtterance(text);
@@ -353,13 +387,15 @@
     locked = true;
     const w = qList[qi];
     const ok = b.dataset.en === w.en;
-    status[w.en] = ok ? "done" : "review";
+    const n = ok ? Math.min(nOf(w.en) + 1, NEED) : 0;
+    status[w.en] = { s: n >= NEED ? "done" : "review", n };
     save();
-    results.push({ w, ok });
+    results.push({ w, ok, n });
     $("choices").querySelectorAll(".choice").forEach(c => { if (c.dataset.en === w.en) c.classList.add("right"); });
     if (!ok) b.classList.add("wrong");
     $("feedback").className = "feedback " + (ok ? "ok" : "no");
-    $("feedback").textContent = ok ? "⭕ 맞았어요!" : `❌ 정답은 '${w.ko}' 예요`;
+    $("feedback").textContent = !ok ? `❌ 정답은 '${w.ko}' 예요`
+      : n >= NEED ? "🎉 맞았어요! 연습 완료!" : `⭕ 맞았어요! (연속 ${n}/${NEED})`;
     quizTimer = setTimeout(() => {
       qi++;
       if (qi < qList.length) renderQuestion(); else showResult();
@@ -372,12 +408,19 @@
     const total = results.length;
     $("rBig").textContent = right === total ? "🎉" : right >= total / 2 ? "👍" : "💪";
     $("rScore").textContent = `${total}개 중 ${right}개 맞았어요!`;
-    $("rList").innerHTML = results.map(r =>
-      `<div class="r-item"><span class="mk">${r.ok ? "✅" : "🔁"}</span><span class="tx"><b>${r.w.en}</b> <span>${r.w.ko}</span></span></div>`
-    ).join("");
-    const wrong = results.filter(r => !r.ok).map(r => r.w);
-    $("rRetry").hidden = wrong.length === 0;
-    $("rRetry").onclick = () => openLearn(wrong, "틀린 단어");
+    // 왼쪽: 영어 단어 (+ 결과), 오른쪽: 한글 발음과 뜻
+    $("rList").innerHTML = results.map(r => {
+      const cls = !r.ok ? "no" : r.n >= NEED ? "done" : "ok";
+      const note = !r.ok ? "❌ 틀림 · 처음부터 다시" : r.n >= NEED ? "✅ 연습 완료!" : `⭕ 맞음 · 연속 ${r.n}/${NEED}`;
+      return `<div class="r-item">
+        <div class="r-left"><div class="r-en">${r.w.en}</div><div class="r-note ${cls}">${note}</div></div>
+        <div class="r-right"><div class="r-pr">${r.w.pr}</div><div class="r-ko">${r.w.ko}</div></div>
+      </div>`;
+    }).join("");
+    const left = results.filter(r => r.n < NEED).map(r => r.w);
+    $("rRetry").hidden = left.length === 0;
+    $("rRetry").textContent = `🔁 아직 완료 안 된 단어 ${left.length}개 다시 공부하기`;
+    $("rRetry").onclick = () => openLearn(left, "다시 공부");
     show("result");
   }
 

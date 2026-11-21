@@ -1,5 +1,5 @@
 // 단어나 화면을 고친 뒤에는 VERSION 숫자를 올려주세요 (폰에 새 버전이 반영됩니다)
-const VERSION = "v1";
+const VERSION = "v2";
 const FILES = ["./", "index.html", "words.js", "manifest.json", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", (e) => {
