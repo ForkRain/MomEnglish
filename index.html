@@ -64,6 +64,10 @@
   .bar .d { background: var(--done); }
   .bar .r { background: var(--review); }
   .ch-count { font-size: 16px; color: var(--muted); }
+  .ch-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 40px; }
+  .ch-sum { background: var(--card); border: 2px solid var(--line); color: var(--ink); font-weight: 800; font-size: 17px; padding: 6px 12px; border-radius: 12px; flex-shrink: 0; }
+  .r-item { cursor: pointer; border-radius: 12px; transition: background .2s; }
+  .r-item.saying { background: var(--done-bg); }
   .chapter.all-done { border-color: var(--done); background: var(--done-bg); }
   .sec { font-size: 22px; margin: 24px 4px 10px; }
   .sec small { font-size: 16px; color: var(--muted); font-weight: 600; }
@@ -249,7 +253,7 @@
   <div class="stage result">
     <div class="r-big" id="rBig"></div>
     <div class="r-score" id="rScore"></div>
-    <div class="r-sub">퀴즈에서 <b>4번 연속</b> 맞힌 단어만 <b style="color:var(--done)">연습 완료</b>가 돼요.<br>틀리면 처음부터 다시 세요.</div>
+    <div class="r-sub" id="rSub">퀴즈에서 <b>4번 연속</b> 맞힌 단어만 <b style="color:var(--done)">연습 완료</b>가 돼요.<br>틀리면 처음부터 다시 세요.</div>
     <div class="r-list" id="rList"></div>
     <button class="btn main" id="rRetry">🔁 틀린 단어 다시 공부하기</button>
     <button class="btn alt" data-home>처음 화면으로</button>
@@ -314,7 +318,10 @@
             <button class="ch-start" data-ch="${i}">시작</button>
           </div>
           <div class="bar"><div class="d" style="width:${d * 10}%"></div><div class="r" style="width:${r * 10}%"></div></div>
-          <div class="ch-count">${d === 10 ? "🎉 모두 완료!" : `완료 ${d} · 복습 ${r} · 아직 ${10 - d - r}`}</div>
+          <div class="ch-foot">
+            <div class="ch-count">${d === 10 ? "🎉 모두 완료!" : `완료 ${d} · 복습 ${r} · 아직 ${10 - d - r}`}</div>
+            ${d + r > 0 ? `<button class="ch-sum" data-sum="${i}">📋 결과</button>` : ""}
+          </div>
         </div>`;
     const groups = [
       { title: `✈️ 여행 영어 <small>1~10장</small>`, from: 0, to: 10 },
@@ -336,6 +343,8 @@
     $("chapters").innerHTML = html;
   }
   $("chapters").addEventListener("click", (e) => {
+    const s = e.target.closest("[data-sum]");
+    if (s) { showChapterSummary(+s.dataset.sum); return; }
     const b = e.target.closest("[data-ch]");
     if (b) { const ci = +b.dataset.ch; openLearn(ALL.filter(w => w.ci === ci), `${ci + 1}장 ${CHAPTERS[ci].title}`); }
   });
@@ -474,17 +483,33 @@
   });
 
   // ---------- 결과 ----------
-  function showResult() {
-    const right = results.filter(r => r.ok).length;
-    const total = results.length;
-    $("rBig").textContent = right === total ? "🎉" : right >= total / 2 ? "👍" : "💪";
-    $("rScore").textContent = `${total}개 중 ${right}개 맞았어요!`;
+  const RESULT_SUB = $("rSub").innerHTML;
+  function showResult(summary) {
+    if (summary) {
+      // 챕터 정리 화면: 공부 기록으로 만듦 (연속 정답 1 이상 = 마지막에 맞힘, 0 = 마지막에 틀림)
+      const tried = results.filter(r => r.ok !== null);
+      const done = results.filter(r => r.n >= NEED).length;
+      $("rBig").textContent = "📋";
+      $("rScore").textContent = summary;
+      $("rSub").innerHTML = `퀴즈 본 단어 ${tried.length}개 · <b style="color:var(--done)">완료 ${done}개</b>`
+        + (results.length > tried.length ? ` · 아직 퀴즈 안 본 단어 ${results.length - tried.length}개` : "")
+        + `<br>4번 연속 맞히면 연습 완료가 돼요.`;
+    } else {
+      const right = results.filter(r => r.ok).length;
+      const total = results.length;
+      $("rBig").textContent = right === total ? "🎉" : right >= total / 2 ? "👍" : "💪";
+      $("rScore").textContent = `${total}개 중 ${right}개 맞았어요!`;
+      $("rSub").innerHTML = RESULT_SUB;
+    }
     // 왼쪽: 영어 단어 (+ 결과), 오른쪽: 한글 발음과 뜻
     $("rList").innerHTML = results.map(r => {
-      const cls = !r.ok ? "no" : r.n >= NEED ? "done" : "ok";
-      const note = !r.ok ? "❌ 틀림 · 처음부터 다시" : r.n >= NEED ? "✅ 연습 완료!" : `⭕ 맞음 · 연속 ${r.n}/${NEED}`;
-      return `<div class="r-item">
-        <div class="r-left"><div class="r-en">${r.w.en}</div><div class="r-note ${cls}">${note}</div></div>
+      const cls = r.ok === null ? "ok" : !r.ok ? "no" : r.n >= NEED ? "done" : "ok";
+      const note = r.ok === null ? "➖ 아직 퀴즈 안 봄"
+        : !r.ok ? (summary ? "❌ 마지막에 틀림 · 처음부터 다시" : "❌ 틀림 · 처음부터 다시")
+        : r.n >= NEED ? "✅ 연습 완료!"
+        : `⭕ ${summary ? "마지막에 맞음" : "맞음"} · 연속 ${r.n}/${NEED}`;
+      return `<div class="r-item" data-say="${r.w.en}">
+        <div class="r-left"><div class="r-en">🔊 ${r.w.en}</div><div class="r-note ${cls}">${note}</div></div>
         <div class="r-right"><div class="r-pr">${r.w.pr}</div><div class="r-ko">${r.w.ko}</div></div>
       </div>`;
     }).join("");
@@ -493,6 +518,23 @@
     $("rRetry").textContent = `🔁 아직 완료 안 된 단어 ${left.length}개 다시 공부하기`;
     $("rRetry").onclick = () => openLearn(left, "다시 공부");
     show("result");
+  }
+
+  // 결과 목록에서 단어 줄을 누르면 그 영어 발음 재생
+  $("rList").addEventListener("click", (e) => {
+    const row = e.target.closest("[data-say]");
+    if (!row) return;
+    speak(row.dataset.say);
+    row.classList.add("saying");
+    setTimeout(() => row.classList.remove("saying"), 600);
+  });
+
+  // 챕터별 퀴즈 정리 화면 (홈의 📋 결과 버튼)
+  function showChapterSummary(ci) {
+    results = ALL.filter(w => w.ci === ci).map(w => ({
+      w, n: nOf(w.en), ok: status[w.en] ? nOf(w.en) > 0 : null,
+    }));
+    showResult(`${ci + 1}장 ${CHAPTERS[ci].title} 퀴즈 결과`);
   }
 
   // ---------- 백업 / 불러오기 ----------
