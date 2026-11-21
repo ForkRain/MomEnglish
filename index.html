@@ -137,6 +137,7 @@
   /* ---------- 백업 ---------- */
   .home-top { display: flex; align-items: center; gap: 10px; }
   .home-top .title { flex: 1; }
+  .ver { display: inline-block; vertical-align: middle; font-size: 14px; font-weight: 800; color: var(--done); background: var(--done-bg); border: 1px solid var(--line); padding: 2px 8px; border-radius: 99px; }
   .icon-btn {
     display: flex; flex-direction: column; align-items: center; gap: 2px; flex-shrink: 0;
     background: var(--card); border: 2px solid var(--line); border-radius: 16px;
@@ -158,7 +159,7 @@
 <!-- 홈 화면 -->
 <main id="home" class="wrap">
   <div class="home-top">
-    <h1 class="title">엄마 영어 단어장 🌼</h1>
+    <h1 class="title">엄마 영어 단어장 🌼 <span class="ver" id="ver"></span></h1>
     <button class="icon-btn" id="openMenu" aria-label="공부 기록 지키기">💾<span>기록</span></button>
   </div>
   <p class="summary" id="summary"></p>
@@ -254,6 +255,7 @@
   </div>
 </section>
 
+<script src="version.js"></script>
 <script src="words.js"></script>
 <script>
   // ---------- 저장 ----------
@@ -561,6 +563,7 @@
     modalMsg(`✅ 불러왔어요! 완료 ${c.done}개 · 복습 ${c.review}개`, true);
   });
 
+  $("ver").textContent = "V" + (window.APP_VERSION || "?");
   renderHome();
 
   // 오프라인 사용 (https 또는 localhost 에서만 동작)
