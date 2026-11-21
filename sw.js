@@ -1,5 +1,5 @@
-// 단어나 화면을 고친 뒤에는 VERSION 숫자를 올려주세요 (폰에 새 버전이 반영됩니다)
-const VERSION = "v4";
+﻿// ?⑥뼱???붾㈃??怨좎튇 ?ㅼ뿉??VERSION ?レ옄瑜??щ젮二쇱꽭??(?곗뿉 ??踰꾩쟾??諛섏쁺?⑸땲??
+const VERSION = "v5";
 const FILES = ["./", "index.html", "words.js", "manifest.json", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", (e) => {
@@ -14,7 +14,7 @@ self.addEventListener("activate", (e) => {
   self.clients.claim();
 });
 
-// 인터넷이 되면 새 파일, 안 되면 저장된 파일 사용
+// ?명꽣?룹씠 ?섎㈃ ???뚯씪, ???섎㈃ ??λ맂 ?뚯씪 ?ъ슜
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   e.respondWith(
