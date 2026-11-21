@@ -1,5 +1,5 @@
 ﻿// ?⑥뼱???붾㈃??怨좎튇 ?ㅼ뿉??VERSION ?レ옄瑜??щ젮二쇱꽭??(?곗뿉 ??踰꾩쟾??諛섏쁺?⑸땲??
-const VERSION = "v5";
+const VERSION = "v6";
 const FILES = ["./", "index.html", "words.js", "manifest.json", "icon-192.png", "icon-512.png"];
 
 self.addEventListener("install", (e) => {

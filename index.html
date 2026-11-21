@@ -294,12 +294,8 @@
       ? `🔁 복습 필요 단어 ${review}개 공부하기`
       : `🔁 복습 필요 단어 공부하기 (${review}개 중 10개씩)`;
 
-    $("chapters").innerHTML = CHAPTERS.map((c, i) => {
-      const d = c.words.filter(w => stOf(w[1]) === "done").length;
-      const r = c.words.filter(w => stOf(w[1]) === "review").length;
-      const head = i === 0 ? `<h2 class="sec">✈️ 여행 영어 <small>1~10장</small></h2>`
-                 : i === 10 ? `<h2 class="sec">📘 기초 단어 <small>11~50장</small></h2>` : "";
-      return `${head}
+    // 10개 모두 완료한 챕터는 맨 아래 "완료한 챕터"로 보냄 (스크롤 줄이기)
+    const card = (c, i, d, r) => `
         <div class="chapter${d === 10 ? " all-done" : ""}">
           <div class="ch-head">
             <div class="ch-emoji">${c.emoji}</div>
@@ -309,7 +305,24 @@
           <div class="bar"><div class="d" style="width:${d * 10}%"></div><div class="r" style="width:${r * 10}%"></div></div>
           <div class="ch-count">${d === 10 ? "🎉 모두 완료!" : `완료 ${d} · 복습 ${r} · 아직 ${10 - d - r}`}</div>
         </div>`;
-    }).join("");
+    const groups = [
+      { title: `✈️ 여행 영어 <small>1~10장</small>`, from: 0, to: 10 },
+      { title: `📘 기초 단어 <small>11~50장</small>`, from: 10, to: CHAPTERS.length },
+    ];
+    let html = "", doneHtml = "", doneCount = 0;
+    for (const g of groups) {
+      let part = "";
+      for (let i = g.from; i < g.to; i++) {
+        const c = CHAPTERS[i];
+        const d = c.words.filter(w => stOf(w[1]) === "done").length;
+        const r = c.words.filter(w => stOf(w[1]) === "review").length;
+        if (d === 10) { doneHtml += card(c, i, d, r); doneCount++; }
+        else part += card(c, i, d, r);
+      }
+      if (part) html += `<h2 class="sec">${g.title}</h2>${part}`;
+    }
+    if (doneHtml) html += `<h2 class="sec">🎉 완료한 챕터 <small>${doneCount}개</small></h2>${doneHtml}`;
+    $("chapters").innerHTML = html;
   }
   $("chapters").addEventListener("click", (e) => {
     const b = e.target.closest("[data-ch]");
