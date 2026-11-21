@@ -352,6 +352,7 @@
     $("where").textContent = name;
     show("learn");
     renderCard();
+    speak(deck[idx].en); // 연습 시작하면 첫 단어 소리 자동 재생
   }
   function renderCard() {
     const w = deck[idx];
@@ -379,6 +380,7 @@
     card.style.transform = `translateX(${step > 0 ? -40 : 40}px)`;
     setTimeout(() => {
       idx = n; renderCard();
+      speak(deck[idx].en); // 카드를 넘길 때마다 그 단어 소리 자동 재생
       card.style.transition = "none";
       card.style.transform = `translateX(${step > 0 ? 40 : -40}px)`;
       requestAnimationFrame(() => requestAnimationFrame(() => {
