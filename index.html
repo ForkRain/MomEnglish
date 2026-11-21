@@ -68,6 +68,7 @@
   .ch-sum { background: var(--card); border: 2px solid var(--line); color: var(--ink); font-weight: 800; font-size: 17px; padding: 6px 12px; border-radius: 12px; flex-shrink: 0; }
   .r-item { cursor: pointer; border-radius: 12px; transition: background .2s; }
   .r-item.saying { background: var(--done-bg); }
+  .ok-mark { color: #16a34a; font-weight: 900; font-size: 1.25em; line-height: 1; -webkit-text-stroke: 1.5px #16a34a; }
   .chapter.all-done { border-color: var(--done); background: var(--done-bg); }
   .sec { font-size: 22px; margin: 24px 4px 10px; }
   .sec small { font-size: 16px; color: var(--muted); font-weight: 600; }
@@ -477,8 +478,8 @@
     $("choices").querySelectorAll(".choice").forEach(c => { if (c.dataset.en === w.en) c.classList.add("right"); });
     if (!ok) b.classList.add("wrong");
     $("feedback").className = "feedback " + (ok ? "ok" : "no");
-    $("feedback").textContent = !ok ? `❌ 정답은 '${w.ko}' 예요`
-      : n >= NEED ? "🎉 맞았어요! 연습 완료!" : `⭕ 맞았어요! (연속 ${n}/${NEED})`;
+    $("feedback").innerHTML = !ok ? `❌ 정답은 '${w.ko}' 예요`
+      : n >= NEED ? "🎉 맞았어요! 연습 완료!" : `${OK_MARK} 맞았어요! (연속 ${n}/${NEED})`;
     quizTimer = setTimeout(() => {
       qi++;
       if (qi < qList.length) renderQuestion(); else showResult();
@@ -487,6 +488,8 @@
 
   // ---------- 결과 ----------
   const RESULT_SUB = $("rSub").innerHTML;
+  // 맞음 표시: 초록색 동그라미 (틀림은 빨간 ❌ 그대로)
+  const OK_MARK = `<span class="ok-mark">○</span>`;
   function showResult(summary) {
     if (summary) {
       // 챕터 정리 화면: 공부 기록으로 만듦 (연속 정답 1 이상 = 마지막에 맞힘, 0 = 마지막에 틀림)
@@ -510,7 +513,7 @@
       const note = r.ok === null ? "➖ 아직 퀴즈 안 봄"
         : !r.ok ? (summary ? "❌ 마지막에 틀림 · 처음부터 다시" : "❌ 틀림 · 처음부터 다시")
         : r.n >= NEED ? "✅ 연습 완료!"
-        : `⭕ ${summary ? "마지막에 맞음" : "맞음"} · 연속 ${r.n}/${NEED}`;
+        : `${OK_MARK} ${summary ? "마지막에 맞음" : "맞음"} · 연속 ${r.n}/${NEED}`;
       return `<div class="r-item" data-say="${r.w.en}">
         <div class="r-left"><div class="r-en">🔊 ${r.w.en}</div><div class="r-note ${cls}">${note}</div></div>
         <div class="r-right"><div class="r-pr">${r.w.pr}</div><div class="r-ko">${r.w.ko}</div></div>
